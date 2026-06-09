@@ -1,0 +1,690 @@
+---
+title: "Introduction to linear regression"
+author: ""
+output:
+  pdf_document: default
+  html_document:
+    includes:
+      in_header: header.html
+    css: ./lab.css
+    highlight: pygments
+    theme: cerulean
+    toc: true
+    toc_float: true
+editor_options: 
+  chunk_output_type: console
+  markdown: 
+    wrap: 72
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE, message = FALSE, warning = FALSE)
+```
+
+The Human Freedom Index is a report that attempts to summarize the idea
+of "freedom" through a bunch of different variables for many countries
+around the globe. It serves as a rough objective measure for the
+relationships between the different types of freedom - whether it's
+political, religious, economical or personal freedom - and other social
+and economic circumstances. The Human Freedom Index is an annually
+co-published report by the Cato Institute, the Fraser Institute, and the
+Liberales Institut at the Friedrich Naumann Foundation for Freedom.
+
+In this lab, you'll be analyzing data from Human Freedom Index reports
+from 2008-2016. Your aim will be to summarize a few of the relationships
+within the data both graphically and numerically in order to find which
+variables can help tell a story about freedom.
+
+## Getting Started
+
+### Load packages
+
+In this lab, you will explore and visualize the data using the
+**tidyverse** suite of packages. The data can be found in the companion
+package for OpenIntro resources, **openintro**.
+
+Let's load the packages.
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+data('hfi', package='openintro')
+```
+
+### The data
+
+The data we're working with is in the openintro package and it's called
+`hfi`, short for Human Freedom Index.
+
+1.  What are the dimensions of the dataset?
+
+```{r}
+?hfi
+```
+
+**The data set has 1458 observations and 123 variables.**
+
+2.  What type of plot would you use to display the relationship between
+    the personal freedom score, `pf_score`, and one of the other
+    numerical variables? Plot this relationship using the variable
+    `pf_expression_control` as the predictor. Does the relationship look
+    linear? If you knew a country's `pf_expression_control`, or its
+    score out of 10, with 0 being the most, of political pressures and
+    controls on media content, would you be comfortable using a linear
+    model to predict the personal freedom score?
+
+**To display the relationship between the personal freedom score
+(pf_score) and another numerical variable like pf_expression_control, we
+can use a scatterplot. It helps us to visualize the relationship between
+two numerical variables and is suitable for determining if a linear
+relationship exists.**
+
+```{r}
+# Scatterplot of pf_score vs pf_expression_control
+ggplot(hfi, aes(x = pf_expression_control, y = pf_score)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Relationship between Personal Freedom Score and Expression Control",
+       x = "Expression Control Score",
+       y = "Personal Freedom Score") +
+  theme_minimal()
+```
+
+**The scatterplot shows us a positive relationship between the
+Expression Control Score and the Personal Freedom Score. The data points
+follow a linear trend.**
+
+**A linear model can be used for the prediction purpose, but it should
+be interpreted with caution, beccause we should consider the variability
+in the data. It would be beneficial to assess the residuals to check if
+the linear model is an adequate fit or if a more complex model such as
+another non-linear approach might be needed to better capture the
+relationship.**
+
+If the relationship looks linear, we can quantify the strength of the
+relationship with the correlation coefficient.
+
+```{r cor}
+hfi %>%
+  summarise(cor(pf_expression_control, pf_score, use = "complete.obs"))
+```
+
+Here, we set the `use` argument to "complete.obs" since there are some
+observations of NA.
+
+## Sum of squared residuals
+
+::: {#boxedtext}
+In this section, you will use an interactive function to investigate
+what we mean by "sum of squared residuals". You will need to run this
+function in your console, not in your markdown document. Running the
+function also requires that the `hfi` dataset is loaded in your
+environment.
+:::
+
+Think back to the way that we described the distribution of a single
+variable. Recall that we discussed characteristics such as center,
+spread, and shape. It's also useful to be able to describe the
+relationship of two numerical variables, such as `pf_expression_control`
+and `pf_score` above.
+
+3.  Looking at your plot from the previous exercise, describe the
+    relationship between these two variables. Make sure to discuss the
+    form, direction, and strength of the relationship as well as any
+    unusual observations.
+
+**Form:** The relationship appears to be linear, as the data points tend
+to follow a straight-line pattern. This indicates that a linear model
+could be suitable for capturing the relationship between
+pf_expression_control and pf_score.
+
+**Direction:** The scatterplot shows a positive relationship as its
+moving from left to right in the upward direction, it means that as
+pf_expression_control increases, the pf_score also tends to increase.
+This suggests that countries with higher pf_expression_control scores
+tend to have higher personal freedom scores.
+
+**Strength:** While we can see a clear linear trend, along with that we
+can also see some variability in the data, which means the strength of
+the linear relationship is moderate rather than very strong. Some data
+points are spread away from the line, indicating that the model might
+not perfectly predict pf_score based solely on pf_expression_control.
+But we observed from the above code that the correlation between the two
+variables is 79%.
+
+**Unusual Observations:** There are a few data points that lie further
+away from the main cluster, which could be considered outliers. These
+observations may suggest that certain countries do not follow the
+general trend as closely as others, indicating unique situations or
+factors affecting their freedom scores.
+
+**Overall we can say that, the relationship is linear and positive, with
+a moderate strength, and the presence of some variability and potential
+outliers should be taken into account when interpreting predictions.**
+
+Just as you've used the mean and standard deviation to summarize a
+single variable, you can summarize the relationship between these two
+variables by finding the line that best follows their association. Use
+the following interactive function to select the line that you think
+does the best job of going through the cloud of points.
+
+```{r plotss-expression-score, eval=FALSE}
+# This will only work interactively (i.e. will not show in the knitted document)
+hfi <- hfi %>% filter(complete.cases(pf_expression_control, pf_score))
+DATA606::plot_ss(x = hfi$pf_expression_control, y = hfi$pf_score)
+```
+
+After running this command, you'll be prompted to click two points on
+the plot to define a line. Once you've done that, the line you specified
+will be shown in black and the residuals in blue. Note that there are 30
+residuals, one for each of the 30 observations. Recall that the
+residuals are the difference between the observed values and the values
+predicted by the line:
+
+$$
+  e_i = y_i - \hat{y}_i
+$$
+
+The most common way to do linear regression is to select the line that
+minimizes the sum of squared residuals. To visualize the squared
+residuals, you can rerun the plot command and add the argument
+`showSquares = TRUE`.
+
+```{r plotss-expression-score-squares, eval=FALSE}
+DATA606::plot_ss(x = hfi$pf_expression_control, y = hfi$pf_score, showSquares = TRUE)
+```
+
+Note that the output from the `plot_ss` function provides you with the
+slope and intercept of your line as well as the sum of squares.
+
+4.  Using `plot_ss`, choose a line that does a good job of minimizing
+    the sum of squares. Run the function several times. What was the
+    smallest sum of squares that you got? How does it compare to your
+    neighbors?
+
+**The smallest sum of squares i got was 1449.45, as i am doing this lab
+at home i compared it with my other experiments and i saw that the sum
+of the squares range from 1400's to 16,000's**
+
+## The linear model
+
+It is rather cumbersome to try to get the correct least squares line,
+i.e. the line that minimizes the sum of squared residuals, through trial
+and error. Instead, you can use the `lm` function in R to fit the linear
+model (a.k.a. regression line).
+
+```{r m1}
+m1 <- lm(pf_score ~ pf_expression_control, data = hfi)
+```
+
+The first argument in the function `lm` is a formula that takes the form
+`y ~ x`. Here it can be read that we want to make a linear model of
+`pf_score` as a function of `pf_expression_control`. The second argument
+specifies that R should look in the `hfi` data frame to find the two
+variables.
+
+The output of `lm` is an object that contains all of the information we
+need about the linear model that was just fit. We can access this
+information using the summary function.
+
+```{r summary-m1}
+summary(m1)
+```
+
+Let's consider this output piece by piece. First, the formula used to
+describe the model is shown at the top. After the formula you find the
+five-number summary of the residuals. The "Coefficients" table shown
+next is key; its first column displays the linear model's y-intercept
+and the coefficient of `pf_expression_control`. With this table, we can
+write down the least squares regression line for the linear model:
+
+$$
+  \hat{y} = 4.61707 + 0.49143 \times pf\_expression\_control
+$$
+
+One last piece of information we will discuss from the summary output is
+the Multiple R-squared, or more simply, $R^2$. The $R^2$ value
+represents the proportion of variability in the response variable that
+is explained by the explanatory variable. For this model, 63.42% of the
+variability in runs is explained by at-bats.
+
+5.  Fit a new model that uses `pf_expression_control` to predict
+    `hf_score`, or the total human freedom score. Using the estimates
+    from the R output, write the equation of the regression line. What
+    does the slope tell us in the context of the relationship between
+    human freedom and the amount of political pressure on media content?
+
+```{r}
+# linear model
+m2 <- lm(hf_score ~ pf_expression_control, data = hfi)
+
+# summary of the model
+summary(m2)
+
+```
+
+**Based on the output of the linear model, the equation of the
+regression line can be written as:**
+
+$$
+\hat{hf\_score} = 5.1537 + 0.3499 \times pf\_expression\_control
+$$
+
+### Interpretation of the Slope
+
+The slope of the regression line is approximately 0.3499. This indicates
+that for every one-unit increase in the `pf_expression_control` score
+(representing more political pressure and controls on media content),
+the total human freedom score (`hf_score`) is expected to increase by
+0.3499 units, on average.
+
+The positive slope suggests that higher scores of
+`pf_expression_control` (which indicate less political pressure on media
+content) are associated with higher human freedom scores. Thus, as
+political pressure and control on media content decrease, the overall
+human freedom score tends to increase, indicating a positive
+relationship between freedom of expression and general human freedom.
+
+The $R^2$ value is 0.5775, that means 57.75% of the variability in the
+total human freedom score is explained by the political pressure on
+media content (`pf_expression_control`). This suggests a moderate fit of
+the linear model to the data.
+
+## Prediction and prediction errors
+
+Let's create a scatterplot with the least squares line for `m1` laid on
+top.
+
+```{r reg-with-line}
+ggplot(data = hfi, aes(x = pf_expression_control, y = pf_score)) +
+  geom_point() +
+  stat_smooth(method = "lm", se = FALSE)
+```
+
+Here, we are literally adding a layer on top of our plot. `geom_smooth`
+creates the line by fitting a linear model. It can also show us the
+standard error `se` associated with our line, but we'll suppress that
+for now.
+
+This line can be used to predict $y$ at any value of $x$. When
+predictions are made for values of $x$ that are beyond the range of the
+observed data, it is referred to as *extrapolation* and is not usually
+recommended. However, predictions made within the range of the data are
+more reliable. They're also used to compute the residuals.
+
+6.  If someone saw the least squares regression line and not the actual
+    data, how would they predict a country's personal freedom school for
+    one with a 6.7 rating for `pf_expression_control`? Is this an
+    overestimate or an underestimate, and by how much? In other words,
+    what is the residual for this prediction?
+
+To predict the personal freedom score (`pf_score`) for a country with a
+`pf_expression_control` rating of 6.7 using the least squares regression
+line equation:
+
+### we use the regression equation
+
+The equation for the regression line from the previous output is:
+
+$$
+\hat{pf\_score} = 4.61707 + 0.49143 \times pf\_expression\_control
+$$
+
+$$
+\hat{pf\_score} = 4.61707 + 0.49143 \times 6.7
+$$
+
+Calculating this:
+
+$$
+\hat{pf\_score} = 4.61707 + 3.29258 = 7.90965
+$$
+
+So, the predicted personal freedom score for a country with a
+`pf_expression_control` rating of 6.7 is approximately 7.91.
+
+### Determining if it's an overestimate or an underestimate
+
+To determine if this prediction is an overestimate or an underestimate,
+we need the actual personal freedom score for a country with a
+`pf_expression_control` of 6.7 for this we made the below csalculations:
+
+```{r closet_match}
+
+# Filtering the dataset to find the closest `pf_expression_control` value to 6.7
+closest_match <- hfi %>%
+  filter(abs(pf_expression_control - 6.7) < 0.1) %>%
+  select(pf_expression_control, pf_score)
+
+closest_match
+
+```
+
+```{r average_of_values}
+#  average pf_score for the closest matches
+average_pf_score <- closest_match %>%
+  summarise(mean_pf_score = mean(pf_score))
+
+
+average_pf_score
+
+```
+
+### Calculating the residual
+
+The residual is calculated as:
+
+$$
+\text{Residual} = \text{Actual } pf\_score - \hat{pf\_score}
+$$
+
+$$
+\text{Residual} = 8.01 - 7.90 = 0.11
+$$
+
+Since the residual is positive (0.11), it indicates that the predicted
+value is an underestimate of the actual personal freedom score by
+approximately 0.11 units.
+
+## Model diagnostics
+
+To assess whether the linear model is reliable, we need to check for (1)
+linearity, (2) nearly normal residuals, and (3) constant variability.
+
+**Linearity**: You already checked if the relationship between
+`pf_score` and \`pf_expression_control' is linear using a scatterplot.
+We should also verify this condition with a plot of the residuals vs.
+fitted (predicted) values.
+
+```{r residuals}
+ggplot(data = m1, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+
+Notice here that `m1` can also serve as a data set because stored within
+it are the fitted values ($\hat{y}$) and the residuals. Also note that
+we're getting fancy with the code here. After creating the scatterplot
+on the first layer (first line of code), we overlay a horizontal dashed
+line at $y = 0$ (to help us check whether residuals are distributed
+around 0), and we also reanme the axis labels to be more informative.
+
+7.  Is there any apparent pattern in the residuals plot? What does this
+    indicate about the linearity of the relationship between the two
+    variables?
+
+\*\*In the plot we can see that, the residuals are plotted against the
+fitted values (predicted `pf_score`). Here's what we can observe about
+the plot:
+
+### Analysis:
+
+1.  **No Apparent Pattern in Residuals:**
+    -   The residuals seem to be scattered randomly around the
+        horizontal line at zero, without any clear pattern (e.g.,
+        curves, clusters, or systematic structures).
+    -   This randomness indicates that the residuals do not display any
+        particular structure, which suggests that the linearity
+        assumption holds.
+2.  **Linearity Condition:**
+    -   Since there is no apparent pattern, it suggests that the
+        relationship between `pf_expression_control` and `pf_score` is
+        approximately linear.
+
+### Conclusion:
+
+The residual plot indicates that the linear model fits the data well.
+This suggests that a linear model is appropriate for predicting
+`pf_score` using `pf_expression_control`.\*\*
+
+**Nearly normal residuals**: To check this condition, we can look at a
+histogram
+
+```{r hist-res}
+ggplot(data = m1, aes(x = .resid)) +
+  geom_histogram(binwidth = 25) +
+  xlab("Residuals")
+```
+
+or a normal probability plot of the residuals.
+
+```{r qq-res}
+ggplot(data = m1, aes(sample = .resid)) +
+  stat_qq()
+```
+
+Note that the syntax for making a normal probability plot is a bit
+different than what you're used to seeing: we set `sample` equal to the
+residuals instead of `x`, and we set a statistical method `qq`, which
+stands for "quantile-quantile", another name commonly used for normal
+probability plots.
+
+8.  Based on the histogram and the normal probability plot, does the
+    nearly normal residuals condition appear to be met?
+
+Based on the histogram and the normal probability plot (Q-Q plot), we
+can make the following analysis:
+
+### Histogram Analysis
+
+1.  The histogram shows a symmetric shape. However, the bars are densely
+    packed, making it difficult to clearly assess if the distribution is
+    perfectly normal.
+
+### Q-Q Plot Analysis
+
+1.  The Q-Q plot shows that most of the residuals lie close to the
+    straight line, which indicates that they follow a normal
+    distribution reasonably well.
+2.  There are some deviations at the tails, particularly at the extreme
+    ends, suggesting that there may be some mild departure from
+    normality (potentially a few outliers).
+
+### Conclusion
+
+Overall, the nearly normal residuals condition appears to be reasonably
+met, as the residuals exhibit a roughly symmetric shape in the histogram
+and follow the line closely in the Q-Q plot. There may be some mild
+deviations from perfect normality at the extremes, but these do not seem
+severe enough to significantly violate the assumption.
+
+**Constant variability**:
+
+9.  Based on the residuals vs. fitted plot, does the constant
+    variability condition appear to be met?
+
+**Analysis of the Residuals vs. Fitted Plot:**
+
+**Spread of Residuals:** In the residuals vs. fitted, the residuals
+appear to be scattered evenly around the horizontal line at zero, with
+no obvious patterns or funnel-shaped distributions.
+
+**Consistent Variability:** The spread of the residuals does not appear
+to systematically increase or decrease across different levels of fitted
+values. This suggests that the variability is roughly constant.
+
+**Conclusion** Based on the residuals vs. fitted plot, the constant
+variability condition seems to be met. The residuals show a consistent
+spread across the range of fitted values, indicating that the assumption
+is satisfied for the linear model.
+
+\*\*
+
+------------------------------------------------------------------------
+
+## More Practice
+
+-   Choose another freedom variable and a variable you think would
+    strongly correlate with it.. Produce a scatterplot of the two
+    variables and fit a linear model. At a glance, does there seem to be
+    a linear relationship?
+
+Here I am choosing the variables `hf_score` (Human Freedom Score) and
+`ef_score` (Economic Freedom Score), as these two are likely to be
+correlated since economic freedom is often associated with overall human
+freedom.
+
+```{r}
+
+# Scatterplot of Human Freedom Score vs. Economic Freedom Score with a linear regression line
+ggplot(hfi, aes(x = ef_score, y = hf_score)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = TRUE, color = "blue") +
+  labs(title = "Scatterplot of Human Freedom Score vs. Economic Freedom Score",
+       x = "Economic Freedom Score",
+       y = "Human Freedom Score") +
+  theme_minimal()
+
+```
+
+```{r}
+# Fitting a linear model for Human Freedom Score as a function of Economic Freedom Score
+model <- lm(hf_score ~ ef_score, data = hfi)
+
+# Summary of the model
+summary(model)
+
+```
+
+Based on the scatterplot and the linear model output, we can analyze the
+relationship between `hf_score` (Human Freedom Score) and `ef_score`
+(Economic Freedom Score):
+
+### Scatterplot Analysis:
+
+-   The scatterplot shows a strong positive relationship between
+    `Economic Freedom Score` and `Human Freedom Score`. As the
+    `ef_score` increases, the `hf_score` also tends to increase,
+    indicating a linear relationship.
+-   The data points are relatively close to the fitted line, suggesting
+    a strong correlation.
+
+### Linear Model Output:
+
+-   **Regression Equation:** The equation for the regression line is: $$
+    \hat{hf\_score} = 0.25906 + 0.99245 \times ef\_score
+    $$ This means that for every one-unit increase in the
+    `Economic Freedom Score`, the `Human Freedom Score` is expected to
+    increase by approximately 0.99245 units, on average.
+
+-   **Strength of the Relationship:** The $R^2$ value is 0.7308,
+    indicating that about 73.08% of the variability in
+    `Human Freedom Score` can be explained by the
+    `Economic Freedom Score`. This is a relatively high $R^2$,
+    suggesting a strong linear relationship between the two variables.
+
+-   **Significance:** The p-value for the slope (`<2e-16`) is extremely
+    small, indicating that the relationship between `ef_score` and
+    `hf_score` is statistically significant.
+
+### Conclusion:
+
+There appears to be a strong linear relationship between the
+`Economic Freedom Score` and the `Human Freedom Score`.
+
+-   How does this relationship compare to the relationship between
+    `pf_expression_control` and `pf_score`? Use the $R^2$ values from
+    the two model summaries to compare. Does your independent variable
+    seem to predict your dependent one better? Why or why not?
+
+1.  **Model for `pf_expression_control` vs. `pf_score`:**
+    -   The $R^2$ value was approximately **0.5775**, indicating that
+        about **57.75%** of the variability in the
+        `Personal Freedom Score` (`pf_score`) can be explained by the
+        `Political Expression Control` (`pf_expression_control`).
+2.  **Model for `ef_score` vs. `hf_score`:**
+    -   The $R^2$ value was approximately **0.7308**, indicating that
+        about **73.08%** of the variability in the `Human Freedom Score`
+        (`hf_score`) can be explained by the `Economic Freedom Score`
+        (`ef_score`).
+
+### Comparison of the Relationships:
+
+-   **Higher** $R^2$ for `ef_score` vs. `hf_score`: The $R^2$ value for
+    the relationship between `Economic Freedom Score` and
+    `Human Freedom Score` is higher (0.7308) compared to the $R^2$ value
+    for the relationship between `Political Expression Control` and
+    `Personal Freedom Score` (0.5775). This indicates that `ef_score` is
+    a better predictor of `hf_score` than `pf_expression_control` is of
+    `pf_score`.
+
+-   **Explanation:**
+
+    -   The higher $R^2$ value suggests that a larger proportion of the
+        variation in `Human Freedom Score` can be explained by
+        variations in the `Economic Freedom Score`. This implies a
+        stronger linear relationship between `ef_score` and `hf_score`,
+        meaning economic freedom may have a more direct impact on
+        overall human freedom than political expression control does on
+        personal freedom.
+
+-   What's one freedom relationship you were most surprised about and
+    why? Display the model diagnostics for the regression model
+    analyzing this relationship.
+
+**One freedom relationship that is most surprising for me is between
+freedom of religion (pf_religion) and personal freedom (pf_score). While
+it's known that countries with higher levels of religious freedom may
+also enjoy higher personal freedom, the strength of this relationship
+may not be as strong as anticipated due to the influence of other
+factors on personal freedom.**
+
+```{r}
+# linear model: Freedom of religion vs. Personal freedom score
+religion_model <- lm(pf_score ~ pf_religion, data = hfi)
+
+# Summary of the model
+model_summary <- summary(religion_model)
+print(model_summary)
+
+# Scatterplot with regression line
+ggplot(hfi, aes(x = pf_religion, y = pf_score)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "blue") +
+  labs(title = "Scatterplot of Personal Freedom Score vs. Freedom of Religion",
+       x = "Freedom of Religion",
+       y = "Personal Freedom Score") +
+  theme_minimal()
+
+# Residuals vs. Fitted plot
+ggplot(data = religion_model, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residuals vs. Fitted Values",
+       x = "Fitted values",
+       y = "Residuals") +
+  theme_minimal()
+
+# Q-Q plot for normality of residuals
+ggplot(data = religion_model, aes(sample = .stdresid)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "Q-Q Plot of Residuals") +
+  theme_minimal()
+
+# Histogram of residuals
+ggplot(data = religion_model, aes(x = .resid)) +
+  geom_histogram(binwidth = 0.5, fill = "grey", color = "black") +
+  labs(title = "Histogram of Residuals",
+       x = "Residuals",
+       y = "Count") +
+  theme_minimal()
+
+```
+
+The $R^2$ value for the linear model relating `pf_score` (Personal
+Freedom Score) to `pf_religion` (Religious Freedom) is 0.2472. This
+indicates that approximately 24.72% of the variability in the personal
+freedom score can be explained by the religious freedom score.
+
+The lower $R^2$ value here suggests that religious freedom is a less
+strong predictor of personal freedom compared to economic freedom’s
+relationship with human freedom.
+
+The results indicate that while there is a positive relationship between
+religious freedom and personal freedom, other factors may also play a
+significant role in determining the personal freedom score.
+
+------------------------------------------------------------------------

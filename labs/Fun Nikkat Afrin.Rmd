@@ -1,0 +1,238 @@
+---
+title: "Lab 1: Intro to R"
+author: "Fun Nikkat Afrin"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+### Loading pacakges using library function.
+
+```{r load-packages, message=FALSE}
+library(tidyverse)
+library(openintro)
+```
+
+### Arbuthnot Data set:
+
+```{r arbuthnot_dataset}
+arbuthnot
+```
+
+## Exercise 1
+
+1.  What command would you use to extract just the counts of girls baptized?
+
+-   To know the counts of the girls baptized each year we use **`$`** sign to extract the particular column of the data set in this case the girls column and we can see the count of the girls in each year.
+-   To know the total count of the girls baptized we use **Sum()** function here along with the **\$**.
+
+```{r view-girls-counts}
+arbuthnot$girls
+sum(arbuthnot$girls)
+```
+
+## Exercise 2
+
+2.  Is there an apparent trend in the number of girls baptized over the years? How would you describe it?
+
+```{r trend-girls}
+ggplot(data = arbuthnot, aes(x = year, y = girls)) +
+geom_line(color='red')+labs(title = "Trend in the Number of Girls Baptized Over the Years",
+       x = "Year",
+       y = "Number of Girls Baptized")
+```
+
+### **Overall Description:**
+
+There seems to be a *fluctuating trend* with the number of girls that are been baptized between the time span of 1620's to 1720's.
+
+**Specific Observations:**
+
+-   *Early Years (1620-1650):* There is a noticeable decline in the number of girls baptized, reaching a low point around the mid-1650s.
+
+-   *Mid-1650s to 1680s:* After the decline, there is a sharp and dramatic increase in the number of girls baptized. This upward trend continues, with some fluctuations in between.
+
+-   *Late 1680s to Early 1700s:* The trend becomes more stable with a generally high number of baptisms, though there are a few notable drops, particularly around the 1700s to 1710s.
+
+## Exercise 3
+
+Creating the new Variables for the data set using **piping %\>% and Mutate()**
+
+```{r mutate1}
+# Insert code for Exercise 3 here
+arbuthnot$boys + arbuthnot$girls
+# As my Arbuthnot already has the total column i am creating a new column total2
+arbuthnot <- arbuthnot %>%
+mutate(total2 = boys + girls)
+```
+
+**Where is the new variable?**
+
+```{r newvariable}
+names(arbuthnot)
+```
+
+Over here we can observe that the new variables are added at the end of the dataset.
+
+**Line Plot for Total no. of baptisms per year**
+
+```{r Total_baptisms}
+ggplot(data = arbuthnot, aes(x = year, y = total2)) +
+geom_line(color='purple')+labs(title = "Trend in the Total number of  Baptisms per Year",
+       x = "Year",
+       y = "Total no.of Baptisms")
+```
+
+Over here we can observe that it follows the similar trend of the girls baptism. **It has a fluctuating trend over years.**
+
+```{r mutate_arbuthnot}
+arbuthnot <- arbuthnot %>%
+mutate(boy_to_girl_ratio_2 = boys / girls)
+```
+
+```{r mutate2}
+arbuthnot <- arbuthnot %>%
+mutate(boy_ratio_2 = boys / total2)
+```
+
+```{r mutate3}
+arbuthnot <- arbuthnot %>%
+mutate(girl_ratio = girls / total2)
+```
+
+```{r plot-prop-boys-arbuthnot}
+ggplot(data = arbuthnot, aes(x = year, y = boy_ratio_2)) +geom_line(color='blue')+labs(title = "Proportion of boys born over time",x = "Year",y = "Proportion of boys born")
+```
+
+### *Observations*
+
+-   *Fluctuating Proportion:* The proportion of boys born each year fluctuates quite significantly over the time period from 1629 to 1720.
+
+-   *Proportion Around 0.51 to 0.53:* The proportion mostly oscillates between approximately 0.51 and 0.53.
+
+-   Even though we observe there are higher no of boys baptized in the year 1655's to 1660's we also observed in the previous graphs that there was a dip in the trend for no of girls baptized and total no of children baptised.
+
+## Exercise 4
+
+### Loading Present Data Set:
+
+```{r dim-present}
+present
+```
+
+```{r min_max_in_present}
+present %>%
+summarize(min = min(boys),
+max = max(boys)
+)
+```
+
+**What years are included in this data set? What are the dimensions of the data frame? What are the variable (column) names?**
+
+```{r}
+
+# Plotting boys and girls on the same plot with different colors
+ggplot(data = present, aes(x = year)) +
+  geom_line(aes(y = boys, color = "boys")) +
+  geom_line(aes(y = girls, color = "girls")) +
+  scale_color_manual(values = c("boys" = "blue", "girls" = "red")) +
+  labs(title = "Number of Boys and Girls Over the Years",
+       x = "Year",
+       y = "Count",
+       legend="color") 
+
+```
+
+1.  In the data set the years from 1940 - early 2000's were included.
+
+```{r dim_pre}
+present
+```
+
+2.  The data frame has **63 rows and 3 columns** namely year,boys and girls.
+
+3.  Here we have three variable columns **year, boys and girls**
+
+## Exercise 5
+
+**How do these counts compare to Arbuthnot’s? Are they of a similar magnitude?**
+
+```{r count-compare}
+# Insert code for Exercise 5 here
+#present$boys + present$girls
+present <- present %>%
+mutate(total = boys + girls)
+present %>% summarize(min = min(total),max = max(total))
+arbuthnot %>% summarize(min=min(total2),max=max(total2))
+```
+
+```{r}
+
+# Calculate total sums for present and arbuthnot datasets
+present_total <- present %>% summarize(total_sum = sum(total))
+arbuthnot_total <- arbuthnot %>% summarize(total_sum = sum(total2))
+
+# Combine the results into a format suitable for ggplot2
+ggplot() +
+  geom_bar(aes(x = "Present", y = present_total$total_sum), stat = "identity", fill = "lightblue", width = 0.5) +
+  geom_bar(aes(x = "Arbuthnot", y = arbuthnot_total$total_sum), stat = "identity", fill = "pink", width = 0.5) +
+  labs(title = "Total Counts for Present and Arbuthnot Datasets",
+       x = "Dataset",
+       y = "Total Count") 
+```
+
+Based on the above graph we can say that the magnitude of the present is way more higher than that of the arbuthnot.
+
+## Exercise 6
+
+**Make a plot that displays the proportion of boys born over time. What do you see? Does Arbuthnot’s observation about boys being born in greater proportion than girls hold up in the U.S.? Include the plot in your response. Hint: You should be able to reuse your code from Exercise 3 above, just replace the name of the data frame.**
+
+```{r plot-prop-boys-present}
+# Insert code for Exercise 6 here
+present <- present %>%
+mutate(present_boy_ratio = boys/total)
+present <- present %>%
+mutate(present_girl_ratio=girls/total)
+
+ggplot(data = present, aes(x = year)) +
+  geom_line(aes(y = present_boy_ratio, color = "boys")) +
+  geom_line(aes(y = present_girl_ratio, color = "girls")) +
+  scale_color_manual(values = c("boys" = "blue", "girls" = "red")) +
+  labs(title = "Present Data set proportion of Boys and Girls Over the Years",
+       x = "Year",
+       y = "Count",
+       legend="color") 
+
+ggplot(data = arbuthnot, aes(x = year)) +
+  geom_line(aes(y = boy_ratio_2, color = "boys")) +
+  geom_line(aes(y = girl_ratio, color = "girls")) +
+  scale_color_manual(values = c("boys" = "blue", "girls" = "red")) +
+  labs(title = "Arbuthnot Data set proportion of Boys and Girls Over the Years",
+       x = "Year",
+       y = "Count",
+       legend="color")
+
+ggplot(data = arbuthnot, aes(x = year, y = boy_ratio_2)) +geom_line(color='blue')+labs(title = " Arbuthnot data set - Proportion of boys born over time",x = "Year",y = "Proportion of boys born")
+
+ggplot(data = present, aes(x = year, y = present_boy_ratio)) +geom_line(color='blue')+labs(title = "Present Data set - Proportion of boys born over time",x = "Year",y = "Proportion of boys born")
+```
+
+-   Based on the first two graphs we can say that the **proportion of boys** is always **greater compared to girls in both the Arbuthnot and present data set.**
+-   While comparing induvidually we can observe that the **proportion of boys being born in Arbuthnot data set is greater/higher compared to present Data set**
+-   There is a **decline in the boy_ratio in the present data set.**
+
+## Exercise 7
+
+**In what year did we see the most total number of births in the U.S.?**
+
+```{r find-max-total}
+# Insert code for Exercise 7 here
+present %>%
+arrange(desc(total))
+```
+
+In the year 1961 we saw the most total number of births in the U.S.
+
+
+### reference:
+
+-   for plotting two line plots in a single graph i learnt and picked up the code from (This website)[<https://forum.posit.co/t/plotting-multiple-line/37056>]
