@@ -2,7 +2,7 @@
 
 **A collection of applied-statistics labs in R / R Markdown — probability, sampling distributions, inference, and regression — demonstrating the statistical foundations behind data science.**
 
-![R](https://img.shields.io/badge/R-RMarkdown-276DC3?logo=r&logoColor=white) ![Topic](https://img.shields.io/badge/Topic-Applied%20Statistics-blue)
+![R](https://img.shields.io/badge/R-RMarkdown-276DC3?logo=r&logoColor=white) ![Topic](https://img.shields.io/badge/Topic-Applied%20Statistics-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
