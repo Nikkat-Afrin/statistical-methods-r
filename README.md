@@ -1,8 +1,9 @@
 # Statistical Methods in R 📈
 
-**A collection of applied-statistics labs in R / R Markdown — probability, sampling distributions, inference, and regression — demonstrating the statistical foundations behind data science.**
+**A collection of applied-statistics labs in R / R Markdown - probability, sampling distributions, inference, and regression - demonstrating the statistical foundations behind data science.**
 
-![R](https://img.shields.io/badge/R-RMarkdown-276DC3?logo=r&logoColor=white) ![Topic](https://img.shields.io/badge/Topic-Applied%20Statistics-blue) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+![R](https://img.shields.io/badge/R-RMarkdown-276DC3?logo=r&logoColor=white) ![Topic](https://img.shields.io/badge/Topic-Applied%20Statistics-blue)
+ [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ---
 
@@ -25,7 +26,7 @@ Hands-on labs (OpenIntro-style) covering the core inferential-statistics toolkit
 Rendered PDFs/HTML of the labs are in [`rendered/`](rendered/).
 
 ## 💡 Why it's in my portfolio
-Strong data science rests on statistical literacy. These labs show I can **reason about uncertainty, test hypotheses rigorously, and build & diagnose regression models** in R — complementing the Python/ML projects elsewhere in my portfolio and rounding out the toolset (Python · SQL · R · Cloud · BI).
+Strong data science rests on statistical literacy. These labs show I can **reason about uncertainty, test hypotheses rigorously, and build & diagnose regression models** in R - complementing the Python/ML projects elsewhere in my portfolio and rounding out the toolset (Python · SQL · R · Cloud · BI).
 
 ## ▶️ How to run
 ```r
